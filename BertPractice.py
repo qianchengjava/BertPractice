@@ -175,54 +175,33 @@ def evaluate(model, iterator, device):
 
 
 # 开始训练和验证
-for i in range(epochs):
-    # train_loss, train_acc = train(model, sentiment_train_loader, optimizer, criterion, device)
-    # print("train loss: ", train_loss, "\t", "train acc:", train_acc)
-    valid_loss, valid_acc = evaluate(model, sentiment_valid_loader, device)
-    print("valid loss: ", valid_loss, "\t", "valid acc:", valid_acc)
-
-
-
-# /Users/qiancheng/Desktop/pywork/hello/.venv/bin/python -X pycache_prefix=/Users/qiancheng/Library/Caches/JetBrains/PyCharm2024.1/cpython-cache /Applications/PyCharm.app/Contents/plugins/python/helpers/pydev/pydevd.py --multiprocess --qt-support=auto --client 127.0.0.1 --port 59063 --file /Users/qiancheng/Desktop/pywork/BertPractice/BertPractice.py
-# Connected to pydev debugger (build 241.15989.155)
-# /Users/qiancheng/Desktop/pywork/hello/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
-#   warnings.warn(
-# /Users/qiancheng/Desktop/pywork/hello/.venv/lib/python3.9/site-packages/huggingface_hub/file_download.py:1132: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
-#   warnings.warn(
-# Some weights of BertForSequenceClassification were not initialized from the model checkpoint at bert-base-uncased and are newly initialized: ['classifier.bias', 'classifier.weight']
-# You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
-# /Users/qiancheng/Desktop/pywork/hello/.venv/lib/python3.9/site-packages/transformers/optimization.py:521: FutureWarning: This implementation of AdamW is deprecated and will be removed in a future version. Use the PyTorch implementation torch.optim.AdamW instead, or set `no_deprecation_warning=True` to disable this warning
-#   warnings.warn(
-# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-# the text is : 我是在看了 the label is : tensor([1, 0])
-# The output is : tensor(0.7383) tensor([[-0.3316,  0.2743],
-#         [-0.3737,  0.2321]])
-# len(iterator) is : 5
-# len(iterator.dataset.dataset) is : 9
-# &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-# the text is : 有点重，有 the label is : tensor([0, 0])
-# The output is : tensor(1.0231) tensor([[-0.3394,  0.2379],
-#         [-0.3256,  0.2522]])
-# len(iterator) is : 5
-# len(iterator.dataset.dataset) is : 9
-# &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-# the text is : 因为是16 the label is : tensor([0, 0])
-# The output is : tensor(0.9638) tensor([[-0.2929,  0.1637],
-#         [-0.3167,  0.1932]])
-# len(iterator) is : 5
-# len(iterator.dataset.dataset) is : 9
-# &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-# the text is : 想起来了， the label is : tensor([1, 1])
-# The output is : tensor(0.4628) tensor([[-0.3052,  0.2533],
-#         [-0.3516,  0.1508]])
-# len(iterator) is : 5
-# len(iterator.dataset.dataset) is : 9
-# &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-# the text is : 这是我自己 the label is : tensor([0])
-# The output is : tensor(0.9848) tensor([[-0.3733,  0.1438]])
-# len(iterator) is : 5
-# len(iterator.dataset.dataset) is : 9
-# &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-# valid loss:  0.834535276889801 	 valid acc: 0.3333333333333333
+# for i in range(epochs):
+#     # train_loss, train_acc = train(model, sentiment_train_loader, optimizer, criterion, device)
+#     # print("train loss: ", train_loss, "\t", "train acc:", train_acc)
+#     valid_loss, valid_acc = evaluate(model, sentiment_valid_loader, device)
+#     print("valid loss: ", valid_loss, "\t", "valid acc:", valid_acc)
 #
-# Process finished with exit code 0
+#
+
+model.eval()
+my_dict = {}
+for _, batch in enumerate(sentiment_valid_loader):
+
+    label = batch["label"].to(device)
+    text = batch["text"]
+    tokenized_text = tokenizer(text, max_length=100, add_special_tokens=True, truncation=True, padding=True,
+                               return_tensors="pt")
+    output = model(**tokenized_text, labels=label)
+    y_pred_label = output[1].argmax(dim=1)
+    print(y_pred_label)
+
+    count = 0
+    for num in y_pred_label:
+        eachTxt = text[count]
+        if num.item() == 0:
+            my_dict.update({eachTxt: '好'})
+        if num.item() == 1:
+            my_dict.update({eachTxt: '坏'})
+        count += 1
+for txt, res in my_dict.items():
+    print('the txt is :', txt, '\nand the value is :', res, '\n', '*' * 300)
